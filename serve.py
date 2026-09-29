@@ -18,14 +18,27 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         super().end_headers()
 
 def local_ip():
-    output = subprocess.check_output(
-        ["ipconfig"],
-        text=True,
-        encoding="utf-8",
-        errors="ignore",
-    )
+    try:
+        output = subprocess.check_output(
+            ["ipconfig"],
+            text=True,
+            encoding="utf-8",
+            errors="ignore",
+        )
+        ips = re.findall(r"IPv4[^:]*:\s*([\d.]+)", output)
+    except (FileNotFoundError, OSError):
+        try:
+            output = subprocess.check_output(
+                ["ip", "-4", "addr", "show"],
+                text=True,
+                encoding="utf-8",
+                errors="ignore",
+            )
+            ips = re.findall(r"inet\s*([\d.]+)", output)
+        except (FileNotFoundError, OSError):
+            return "localhost"
 
-    for ip in re.findall(r"IPv4[^:]*:\s*([\d.]+)", output):
+    for ip in ips:
         if ip.startswith("192.168."):
             return ip
 
