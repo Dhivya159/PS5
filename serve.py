@@ -1,3 +1,4 @@
+import argparse
 import http.server
 import ipaddress
 import platform
@@ -9,6 +10,23 @@ from typing import List, Optional
 
 PORT = 8000
 ROOT = Path(__file__).resolve().parent
+
+
+def parse_args(argv=None):
+    parser = argparse.ArgumentParser(
+        description="Serve the Relapse exploit files over HTTP."
+    )
+    parser.add_argument(
+        "-p",
+        "--port",
+        type=int,
+        default=PORT,
+        help=f"Port to listen on (default: {PORT}).",
+    )
+    args = parser.parse_args(argv)
+    if not 1 <= args.port <= 65535:
+        parser.error("Port must be between 1 and 65535.")
+    return args
 
 class Handler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
@@ -168,6 +186,7 @@ def local_ip():
     return "localhost"
 
 if __name__ == "__main__":
-    with http.server.ThreadingHTTPServer(("0.0.0.0", PORT), Handler) as server:
-        print(f"http://{local_ip()}:{PORT}/")
+    port = parse_args().port
+    with http.server.ThreadingHTTPServer(("0.0.0.0", port), Handler) as server:
+        print(f"http://{local_ip()}:{port}/", flush=True)
         server.serve_forever()
